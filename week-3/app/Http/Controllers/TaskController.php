@@ -1,0 +1,119 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\StoreTaskRequest;
+use App\Http\Requests\UpdateTaskRequest;
+use App\Models\Task;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+
+class TaskController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request)
+    {
+        $user = $request->user();
+        $tasks = $user->isAdmin()
+            ? Task::latest()->get()
+            : $user->tasks()->latest()->get();
+
+        return view('tasks.index', compact('tasks'));
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        return view('tasks.create');
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(StoreTaskRequest $request)
+    {
+        $validated = $request->validated();
+
+        $request->user()->tasks()->create($validated);
+
+        return redirect()
+            ->route('tasks.index')
+            ->with('success', 'Task created successfully');
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(Task $task)
+    {
+        if ($denial = $this->denialRedirect($task)) {
+            return $denial;
+        }
+
+        return view('tasks.show', compact('task'));
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Task $task)
+    {
+        if ($denial = $this->denialRedirect($task)) {
+            return $denial;
+        }
+
+        return view('tasks.edit', compact('task'));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(UpdateTaskRequest $request, Task $task)
+    {
+        if ($denial = $this->denialRedirect($task)) {
+            return $denial;
+        }
+
+        $validated = $request->validated();
+
+        $task->update($validated);
+
+        return redirect()
+            ->route('tasks.index')
+            ->with('success', 'Task updated successfully.');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Task $task)
+    {
+        if ($denial = $this->denialRedirect($task)) {
+            return $denial;
+        }
+
+        $task->delete();
+
+        return redirect()
+            ->route('tasks.index')
+            ->with('success', 'Task deleted successfully.');
+    }
+
+    private function denialRedirect(Task $task): ?RedirectResponse
+    {
+        $response = Gate::inspect('manage-task', $task);
+
+        if ($response->denied()) {
+            return redirect()
+                ->route('tasks.index')
+                ->with('error', $response->message());
+        }
+
+        return null;
+    }
+}

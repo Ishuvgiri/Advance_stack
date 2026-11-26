@@ -1,0 +1,20 @@
+# Local environment and machine-specific settings
+**/.env
+**/.env.*
+!**/.env.example
+**/.mcp.json
+**/*Zone.Identifier
+
+# Dependencies and generated assets
+**/vendor/
+**/node_modules/
+**/public/build/
+**/public/hot
+
+# Local databases, logs, caches, and test output
+**/database/*.sqlite*
+**/storage/logs/*.log
+**/storage/framework/cache/data/*
+**/storage/framework/sessions/*
+**/storage/framework/views/*
+**/.phpunit.result.cache
